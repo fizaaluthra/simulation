@@ -9,32 +9,117 @@
       margin-top: 50px;
       min-height: 1000px;
     }
+    .feed h3 {
+      padding: 20px;
+    }
+    .page-title{
+      margin-left: 100px;
+    }
+    .new-meow{
+      padding: 20px;
+    }
     </style>
     <script type = "text/javascript" src="angular.min.js"></script>
+    <script type = "text/javascript" src="angular-route.js"></script>
+    <script type = "text/javascript" src="angular-cookies.js"></script>
+
     <script type="text/javascript">
-    var app = angular.module('voting',[]);
-    app.controller('VotingCtrl', function ($scope, $http){
-    $http.get('/polls').then(function(response){
-        $scope.polls = response.data;
+    var app = angular.module('voting',['ngRoute', 'ngCookies']);
+
+    app.config(function($routeProvider, $locationProvider){
+      $locationProvider.hashPrefix('');
+
+      $routeProvider
+      .when('/', {
+        templateUrl: '/home.html',
+        controller: 'VotingCtrl'
+      })
+      .when('/signup',{
+        templateUrl: '/signup.html' ,
+        controller: 'signupController'
+      })
+      .when('/viewpolls/:id',{
+        templateUrl: '/polldisplay.html',
+        controller: 'pollDisplayController'
       });
+    });
+    app.run(function($rootScope, $cookies){
+      if ($cookies.get('token') && $cookies.get('currentUser')){
+        $rootScope.token = $cookies.get('token');
+        $rootScope.currentUser = $cookies.get('currentUser');
+      }
+    });
+    app.controller('pollDisplayController', function($routeParams, $scope, $http){
+      $http.get('/pollresults', {
+        params: {poll: $routeParams.id}
+      }).then(function(response){
+          console.log(response.data);
+        });
+      $scope.id = $routeParams.id;
+      console.log($routeParams.id);
+    });
+    app.controller('VotingCtrl', function ($rootScope, $scope, $http, $cookies){
+
+    $scope.ids = [];
+    $scope.options=[];
+
+    $scope.addOptions = function() {
+      var newItemNo = $scope.ids.length;
+      $scope.options.push([]);
+      $scope.options[newItemNo][1] = 0;
+      $scope.ids.push(newItemNo);
+      console.log($scope.options);
+    };
+    $scope.removePoll = function(poll){
+      $http.put('/polls/remove', {poll: poll}).then(function(){
+        getPolls();
+      });
+    };
+
+    $scope.submitNewPoll = function(){
+      $http.post('/polls', {newPoll: $scope.newPoll, newPollEncoded: encodeURI($scope.newPoll), options: $scope.options}).then(function(){
+        $scope.newPoll = ''
+        var i;
+        for(i = 0; i < $scope.options.length; ++i){
+          $scope.options[i] = ''
+        }
+        getPolls();
+      });
+    };
+    $scope.signin = function(){
+      $http.put('/users/signin', {users: $scope.username, password: $scope.password}).then(function(res){
+        alert('successfully signed in');
+        $cookies.put('token', res.data.token);
+        $cookies.put('currentUser', $scope.username);
+        $rootScope.token = res.data.token;
+        $rootScope.currentUser = $scope.username;
+      }, function(err){
+        alert('bad login credentials');
+      });
+    }
+    function getPolls(){
+      $http.get('/polls').then(function(response){
+          $scope.polls = response.data;
+        });
+      }
+
+      getPolls();
+    });
+    app.controller('signupController', function ($scope, $http){
+      $scope.submitSignup = function(){
+        var newUser = {
+          username: $scope.username,
+          password: $scope.password,
+        };
+        $http.post('/users', newUser).then(function(){
+          alert('success');
+        });
+      }
     });
     </script>
 </head>
-<body ng-controller="VotingCtrl">
-  <h1>Mittens</h1>
-  <div class ="row feed">
-    <div class = "col-md-4">
-      Login
-      <br><br>
-      <input type="text" size="30" placeholder="username">
-      <br><br>
-      <input type="text" size="30" placeholder="password">
-    </div>
-    <div class = "col-md-8">
-      <h3 ng-repeat="poll in polls">
-        {{ poll }}
-      </h3>
-    </div>
-  </div>
+<body>
+  <h1><a href ="#/">Mittens</a></h1>
+  <div ng-view></div>
 </body>
 </html>

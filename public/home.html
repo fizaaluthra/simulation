@@ -1,0 +1,27 @@
+<div class ="row feed">
+  <div ng-hide="currentUser">
+  <div class = "col-md-4">
+    Login
+    <br><br>
+    <input type="text" size="30" placeholder="username" ng-model="username">
+    <br><br>
+    <input type="text" size="30" placeholder="password" ng-model="password">
+    <br><br>
+    <button type="button" ng-click="signin()">Sign In</button>
+    <a href ="#/signup">Signup</a>
+  </div>
+</div>
+  <div class = "col-md-8">
+    <div class = "new-poll">
+        <input type="text" class="form-control" ng-model="newPoll">
+        <div ng-repeat = "id in ids">
+        <input type="text" class="form-control" ng-model="options[id][0]" placeholder="Enter an option">
+      </div>
+        <button class="btn" type="button" ng-click="addOptions()">Add Options</button>
+        <button class="btn" type="button" ng-click="submitNewPoll()">Submit</button>
+    </div>
+    <h3 ng-repeat="poll in polls">
+    <a href=#/viewpolls/{{poll.textencoded}}> {{ poll.text }}</a>
+      <a href ng-click="removePoll(poll)">delete</a>
+    </h3>
+  </div>
