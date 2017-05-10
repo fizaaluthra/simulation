@@ -18,10 +18,14 @@
     .new-meow{
       padding: 20px;
     }
+    .chart{
+      padding: 100px;
+    }
     </style>
     <script type = "text/javascript" src="angular.min.js"></script>
     <script type = "text/javascript" src="angular-route.js"></script>
     <script type = "text/javascript" src="angular-cookies.js"></script>
+    <script src="Chart.bundle.min.js"></script>
 
     <script type="text/javascript">
     var app = angular.module('voting',['ngRoute', 'ngCookies']);
@@ -50,14 +54,77 @@
       }
     });
     app.controller('pollDisplayController', function($routeParams, $scope, $http){
+      $scope.answer = {
+        text: '',
+        options: '',
+        optionSelected: ''
+      }
+      $scope.updateOptions = function (){
+        for (var i = 0; i < $scope.options.length; ++i){
+          if ($scope.options[i] === $scope.answer.optionSelected){
+              $scope.optionscount[i]+=1;
+              $scope.answer.text = $scope.data.text;
+              $scope.data.options[i][1]+=1;
+              console.log($scope.data);
+            $http.put('/polls/update', $scope.data).then(function(){
+              getChart();
+            });
+            }
+        }
+      }
+      function getChart () {
+        var ctx = document.getElementById("myChart").getContext('2d');
+        var options = {
+          responsive: true,
+          maintainAspectRatio: true
+        }
+
+      var myChart = new Chart(ctx, {
+          type: 'pie',
+          options: options,
+          data: {
+            labels: $scope.options,
+            datasets: [{
+              backgroundColor: $scope.colors,
+              data: $scope.optionscount
+            }]
+          }
+        });
+      }
+      $scope.id = $routeParams.id;
+
       $http.get('/pollresults', {
         params: {poll: $routeParams.id}
       }).then(function(response){
-          console.log(response.data);
-        });
-      $scope.id = $routeParams.id;
-      console.log($routeParams.id);
+          $scope.data = response.data;
+          $scope.options = [];
+          $scope.optionscount = [];
+          $scope.colors = [];
+          for (var i = 0; i < $scope.data.options.length; ++i){
+            $scope.options[i] = $scope.data.options[i][0];
+            $scope.optionscount[i] = $scope.data.options[i][1];
+            $scope.colors[i] = "#"+((1<<24)*Math.random()|0).toString(16);
+          }
+        //   var ctx = document.getElementById("myChart").getContext('2d');
+        //         var options
+        //         var myChart = new Chart(ctx, {
+        //     type: 'pie',
+        //     data: {
+        //       labels: $scope.options,
+        //       datasets: [{
+        //         backgroundColor: $scope.colors,
+        //         data: $scope.optionscount
+        //       }]
+        //     }
+        //   });
+        // $scope.id = $routeParams.id;
+        //
+        // });
+        getChart();
+
     });
+
+  });
     app.controller('VotingCtrl', function ($rootScope, $scope, $http, $cookies){
 
     $scope.ids = [];
@@ -119,7 +186,7 @@
     </script>
 </head>
 <body>
-  <h1><a href ="#/">Mittens</a></h1>
+  <h1><a href ="#/">Voting App</a></h1>
   <div ng-view></div>
 </body>
 </html>

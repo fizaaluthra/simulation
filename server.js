@@ -16,7 +16,7 @@ MongoClient.connect("mongodb://localhost:27017/polls" , function(err, dbconnecti
 });
 app.use(bodyParser.json());
 app.use(express.static('public'));
-  var polls = ['hi','ha'];
+
 app.get('/polls', function(req, res, next) {
   db.collection('polls', function(err, pollsCollection) {
     pollsCollection.find().toArray(function(err, polls){
@@ -30,7 +30,6 @@ app.get('/pollresults', function(req, res, next) {
   db.collection('polls', function(err, pollsCollection) {
     var poll = decodeURIComponent(req.query.poll);
    pollsCollection.findOne({text: poll}, function(err, poll){
-     console.log(poll);
       return res.send(poll);
     });
     return
@@ -43,7 +42,6 @@ app.post('/polls', function(req, res, next){
       return res.send();
     });
   });
-  polls.push(req.body.newPoll);
   res.send();
 });
 
@@ -55,10 +53,22 @@ app.put('/polls/remove', function(req, res, next){
       return res.send();
     });
   });
-  polls.push(req.body.newPoll);
 
   res.send();
 });
+
+app.put('/polls/update', function(req, res, next){
+  db.collection('polls', function(err, pollsCollection){
+    var text = req.body.text;
+    var new_options = req.body.options;
+    console.log(new_options);
+    pollsCollection.findOneAndUpdate({'text': text}, { $set: {'options': new_options}}, function(err){
+      return res.send();
+    });
+  });
+  res.send();
+});
+
 app.post('/users', function(req, res, next){
   db.collection('users', function(err, usersCollection){
     bcrypt.genSalt(10, function(err, salt){
@@ -75,7 +85,6 @@ app.post('/users', function(req, res, next){
       });
     });
   });
-  polls.push(req.body.newPoll);
   res.send();
 });
 app.put('/users/signin', function(req, res, next){
@@ -93,7 +102,6 @@ app.put('/users/signin', function(req, res, next){
       });
     });
   });
-  polls.push(req.body.newPoll);
   res.send();
 });
 app.listen(3000, function(){
