@@ -1,6 +1,6 @@
 <html ng-app="voting">
 <head>
-  <title>Mittens</title>
+  <title>Voting App</title>
   <link href="bootstrap.css" rel="stylesheet" type="text/css">
   <style>
     .feed {
@@ -8,6 +8,10 @@
       margin-right: 100px;
       margin-top: 50px;
       min-height: 1000px;
+    }
+    .heading{
+      text-align: center;
+      padding-top: 20px;
     }
     .feed h3 {
       padding: 20px;
@@ -19,8 +23,68 @@
       padding: 20px;
     }
     .chart{
-      padding: 100px;
+      padding: 0px;
     }
+    .pollheading{
+      font-size: 45px;
+      padding: 20px;
+    }
+    .options{
+  width:24px;
+  height:24px;
+  position:relative;
+  }
+  .errors{
+    color: red;
+  }
+  .loginform{
+    padding-top: 30px;
+    text-align: center;
+  }
+.inputfield{
+  width: 25%;
+  padding: 20px
+  display: block;
+   margin : 0 auto;
+}
+.signuplink{
+  margin: 20px;
+}
+  input[type="radio"] {
+  margin-right: 100px;
+}
+.optioninput{
+  font-size: 20px;
+  height: 40px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-top: 9px;
+  margin-bottom: 9px;
+}
+.delete{
+  font-size: 20px;
+  padding: 30px;
+}
+.poll_title{
+  font-size: 25px;
+  height: 40px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+}
+  .optiontext{
+    font-size: 25px;
+
+  }
+  .right{
+    text-align: right;
+  }
+  .submit{
+    width: 30px;
+    height: 20px
+  }
     </style>
     <script type = "text/javascript" src="angular.min.js"></script>
     <script type = "text/javascript" src="angular-route.js"></script>
@@ -53,7 +117,7 @@
         $rootScope.currentUser = $cookies.get('currentUser');
       }
     });
-    app.controller('pollDisplayController', function($routeParams, $scope, $http){
+    app.controller('pollDisplayController', function($rootScope, $routeParams, $scope, $http){
       $scope.answer = {
         text: '',
         options: '',
@@ -66,21 +130,30 @@
               $scope.answer.text = $scope.data.text;
               $scope.data.options[i][1]+=1;
               console.log($scope.data);
-            $http.put('/polls/update', $scope.data).then(function(){
+            $http.put('/polls/update', $scope.data,
+          {headers: {
+            'authorization': $rootScope.token
+          }}).then(function(err,res){
               getChart();
+            }, function(err){
+              if(err){
+                console.log(err);
+              alert('you have already voted in this poll');
+            }
             });
             }
         }
       }
       function getChart () {
+        console.log($scope.options);
         var ctx = document.getElementById("myChart").getContext('2d');
         var options = {
           responsive: true,
-          maintainAspectRatio: true
         }
 
+
       var myChart = new Chart(ctx, {
-          type: 'pie',
+          type: 'doughnut',
           options: options,
           data: {
             labels: $scope.options,
@@ -105,21 +178,7 @@
             $scope.optionscount[i] = $scope.data.options[i][1];
             $scope.colors[i] = "#"+((1<<24)*Math.random()|0).toString(16);
           }
-        //   var ctx = document.getElementById("myChart").getContext('2d');
-        //         var options
-        //         var myChart = new Chart(ctx, {
-        //     type: 'pie',
-        //     data: {
-        //       labels: $scope.options,
-        //       datasets: [{
-        //         backgroundColor: $scope.colors,
-        //         data: $scope.optionscount
-        //       }]
-        //     }
-        //   });
-        // $scope.id = $routeParams.id;
-        //
-        // });
+
         getChart();
 
     });
@@ -138,13 +197,22 @@
       console.log($scope.options);
     };
     $scope.removePoll = function(poll){
-      $http.put('/polls/remove', {poll: poll}).then(function(){
+      $http.put('/polls/remove', {poll: poll},
+    {headers: {
+      'authorization': $rootScope.token
+    }}).then(function(){
         getPolls();
+      }, function(err){
+        alert('You need to be signed in.');
       });
     };
 
     $scope.submitNewPoll = function(){
-      $http.post('/polls', {newPoll: $scope.newPoll, newPollEncoded: encodeURI($scope.newPoll), options: $scope.options}).then(function(){
+      console.log($rootScope.token);
+      $http.post('/polls', {newPoll: $scope.newPoll, newPollEncoded: encodeURIComponent($scope.newPoll), options: $scope.options, users_voted: []},
+    {headers: {
+      'authorization': $rootScope.token
+    }}).then(function(){
         $scope.newPoll = ''
         var i;
         for(i = 0; i < $scope.options.length; ++i){
@@ -153,16 +221,31 @@
         getPolls();
       });
     };
+    $scope.signin_message = ''
     $scope.signin = function(){
-      $http.put('/users/signin', {users: $scope.username, password: $scope.password}).then(function(res){
-        alert('successfully signed in');
+      $http.put('/users/signin', {username: $scope.username, password: $scope.password}).then(function(res){
+        console.log('back');
+        if(res.data.token){
         $cookies.put('token', res.data.token);
         $cookies.put('currentUser', $scope.username);
         $rootScope.token = res.data.token;
         $rootScope.currentUser = $scope.username;
+        $scope.username = '';
+        $scope.password = '';
+      }
+      else{
+
+        $scope.signin_message = 'Incorrect username or password.'
+      }
       }, function(err){
-        alert('bad login credentials');
+        $scope.signin_message = 'Incorrect username or password.'
       });
+    }
+    $scope.logout = function(){
+      $cookies.remove('token');
+      $cookies.remove('currentUser');
+      $rootScope.token = null;
+      $rootScope.currentUser = null;
     }
     function getPolls(){
       $http.get('/polls').then(function(response){
@@ -180,13 +263,17 @@
         };
         $http.post('/users', newUser).then(function(){
           alert('success');
+          $scope.username = '';
+          $scope.password='';
         });
       }
     });
     </script>
 </head>
 <body>
-  <h1><a href ="#/">Voting App</a></h1>
+  <div class="col-md-12">
+  <h1 class="heading"><a href ="#/">Voting App</a></h1>
+</div>
   <div ng-view></div>
 </body>
 </html>

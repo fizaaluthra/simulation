@@ -1,11 +1,13 @@
-{{id}}
 <div class="col-md-6">
 <canvas id="myChart" width="200" height="200" class="chart"></canvas>
 </div>
 <div class ="col-md-6">
-<div ng-repeat="option in options">
-<input type="radio" ng-model="answer.optionSelected" ng-value="option" name="pollanswer">{{option}}
-</div>
+<span class="pollheading">{{id}}</span>
+<div ng-show="currentUser">
+<div ng-repeat="option in options" class="radio">
+<input type="radio" ng-model="answer.optionSelected" ng-value="option" name="option" class="options"><label class="optiontext">{{option}}</label>
 </div>
 
-<button class="btn" type="button" ng-click="updateOptions()">Submit</button>
+<button class="btn" type="button" ng-click="updateOptions()" class="form-control submit">Submit</button>
+</div>
+</div>

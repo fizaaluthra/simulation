@@ -1,27 +1,47 @@
 <div class ="row feed">
   <div ng-hide="currentUser">
-  <div class = "col-md-4">
+  <div class = "col-md-4 loginform">
+    <h3>
     Login
+  </h3>
     <br><br>
-    <input type="text" size="30" placeholder="username" ng-model="username">
+    <input type="text" size="30" placeholder="username" ng-model="username" class="form-control">
     <br><br>
-    <input type="text" size="30" placeholder="password" ng-model="password">
+    <input type="password" size="30" placeholder="password" ng-model="password" class="form-control">
     <br><br>
-    <button type="button" ng-click="signin()">Sign In</button>
-    <a href ="#/signup">Signup</a>
+    <h4><a href ng-click="signin()">Sign In</a><h4>
+    <br>
+    <span class="errors">{{signin_message}}</span>
+    <h4><a href ="#/signup">Not a member? Sign up today!</a></h4>
   </div>
 </div>
+<div ng-show="currentUser" class="col-md-12">
+<div class="col-md-6">
+<h2>  Hello, {{ currentUser }}!</h2>
+</div>
+<div class="col-md-6 right">
+<h2><a href ng-click="logout()" class="right-align">Logout</a></h2>
+</div>
+
+</div>
   <div class = "col-md-8">
-    <div class = "new-poll">
-        <input type="text" class="form-control" ng-model="newPoll">
-        <div ng-repeat = "id in ids">
-        <input type="text" class="form-control" ng-model="options[id][0]" placeholder="Enter an option">
+    <div class = "new-poll" ng-show="currentUser">
+      <div>
+        <input type="text" class="form-control poll_title" ng-model="newPoll" placeholder="Enter a poll title">
+      </div>
+      <div ng-repeat = "id in ids">
+        <input type="text" class="form-control optioninput" ng-model="options[id][0]" placeholder="Enter an option">
       </div>
         <button class="btn" type="button" ng-click="addOptions()">Add Options</button>
         <button class="btn" type="button" ng-click="submitNewPoll()">Submit</button>
     </div>
     <h3 ng-repeat="poll in polls">
+<div class="col-md-12">
     <a href=#/viewpolls/{{poll.textencoded}}> {{ poll.text }}</a>
-      <a href ng-click="removePoll(poll)">delete</a>
+    <span class="delete"><a href ng-click="removePoll(poll)">delete</a></span>
+    <br>
+    <small>{{ poll.username }}</small>
+<div class="col-md-12">
     </h3>
+    <div class="col-md-12">
   </div>
